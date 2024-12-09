@@ -1,4 +1,5 @@
 ﻿@page "/showEverything"
+@page "/"
 
 @using NuGetPackageManagerApp.AppCode
 @using NuGetPackageManagerWebApp.AppCode.CustomNuGetV2;
@@ -11,33 +12,55 @@
 
 <div class="row">
     <div class="col-12 col-md-6">
-        <h4>Full Package List</h4>
-        @foreach (var package in packageRows)
-        {
-            <p>
-                @($"ID:{package.CustomPackageId} | Name: {package.PackageName} | Version: {package.PackageVersion}")
-            </p>
-        }
+        <div class="w-100 position-relative d-flex">
+            <h4 class="position-absolute" style="left: 50%; transform: translateX(-50%);">Full Asset File List</h4>
+            <button type="button" class="btn btn-primary position-absolute" style="right: 0;" @onclick="@navigateToAssetFileAdd">Add New Asset File</button>
+        </div>
+        <h5>Solutions</h5>
+        <div class="scrollable-div">
+            @if (assetRows.Where(x => x.ProjectOrSolution == "Solution").Count() == 0)
+            {
+                <p class="text-center">No Solution Asset Files Found</p>
+            }
+            @foreach (var asset in assetRows.Where(x => x.ProjectOrSolution == "Solution"))
+            {
+                <div class="customRowDesign">
+                    <p class="wrapPTag">
+                        @($"Name:{asset.Name} | Path: {asset.AssetsPath}")
+                    </p>
+                    <button type="button" class="btn btn-primary w-100" @onclick="(()=>_nav.NavigateTo(VisualizeChartPath+asset.AssetFileIds))">Show Graph</button>
+                </div>
+            }
+        </div>
+        <h5>Projects</h5>
+        <div class="scrollable-div">
+            @if (assetRows.Where(x => x.ProjectOrSolution == "Project").Count() == 0)
+            {
+                <p class="text-center">No Project Asset Files Found</p>
+            }
+            @foreach (var asset in assetRows.Where(x => x.ProjectOrSolution == "Project"))
+            {
+                <div class="customRowDesign">
+                    <p class="wrapPTag">
+                        @($"Name:{asset.Name} | Path: {asset.AssetsPath}")
+                        <button type="button" class="btn btn-primary w-100" @onclick="(()=>_nav.NavigateTo(VisualizeChartPath+asset.AssetFileIds))">Show Graph</button>
+                    </p>
+                </div>
+            }
+        </div>
     </div>
     <div class="col-12 col-md-6">
-        <h4>Full Asset File List</h4>
-        <button type="button" class="btn btn-primary" @onclick="@navigateToAssetFileAdd">Add New Asset File</button>
-        <h5>Solutions</h5>
-        @foreach (var asset in assetRows.Where(x => x.ProjectOrSolution == "Solution"))
-        {
-            <p>
-                @($"Name:{asset.Name} | Path: {asset.AssetsPath}")
-            </p>
-            <button @onclick="(()=>_nav.NavigateTo(VisualizeChartPath+asset.AssetFileIds))">Show Graph</button>
-        }
-        <h5>Projects</h5>
-        @foreach (var asset in assetRows.Where(x => x.ProjectOrSolution == "Project"))
-        {
-            <p>
-                @($"Name:{asset.Name} | Path: {asset.AssetsPath}")
-                <button @onclick="(()=>_nav.NavigateTo(VisualizeChartPath+asset.AssetFileIds))">Show Graph</button>
-            </p>
-        }
+        <h4>Full Package List</h4>
+        <div class="scrollable-div">
+            @foreach (var package in packageRows)
+            {
+                <div class="customRowDesign">
+                    <p class="packageListPTag">@($"ID:{package.CustomPackageId}")</p>
+                    <p class="packageListPTag">@($"Name: {package.PackageName}")</p>
+                    <p class="packageListPTag">@($"Version: {package.PackageVersion}")</p>
+                </div>
+            }
+        </div>
     </div>
 </div>
 

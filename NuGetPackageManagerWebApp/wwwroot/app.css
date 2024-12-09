@@ -49,3 +49,69 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+
+h4{
+    text-align:center;
+}
+
+h5{
+    margin-top:20px;
+    text-decoration:underline;
+    padding-left:30px;
+}
+
+form {
+    margin: 0;
+    width: 100%;
+    background-color: lightgray;
+    border: solid 1px black;
+    border-radius: 10px;
+    text-align: center;
+    padding:30px 5% 15px 5%;
+}
+
+form h3 {
+    text-decoration:underline;
+    margin-bottom:15px;
+}
+
+form div {
+    margin-bottom:15px;
+}
+
+label{
+    text-align:right;
+    font-weight:bolder;
+}
+
+.customRowDesign {
+    border: solid 1px black;
+    border-radius: 10px;
+    background-color: lightgray;
+    padding: 10px;
+    margin-bottom:10px;
+}
+
+.wrapPTag{
+    word-wrap:anywhere;
+}
+
+.scrollable-div {
+    max-height: 70vh; /* Adjust the height as needed */
+    overflow-y: auto;
+}
+
+.packageListPTag {
+    word-wrap:break-word;
+    margin:5px;
+    padding:0px;
+}
+
+.centered-div {
+    display: flex;
+    justify-content: center;
+}
+
+.text-left {
+    text-align: left;
+}

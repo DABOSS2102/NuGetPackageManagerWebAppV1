@@ -7,11 +7,19 @@
 @inject NavigationManager _nav
 @inject NuGetFileServiceV2 _nugetFileService
 
-<h3>Add Asset File and Packages</h3>
 <div>
     <EditForm Model="@Model" OnValidSubmit="Submit" FormName="myEditForm">
         <DataAnnotationsValidator />
         <ValidationSummary />
+        <h3>Add Asset File and Packages</h3>
+        <p>Please fill out the form below to add a new asset file and its associated packages. Ensure that all required fields are completed.</p>
+        <div class="centered-div">
+            <ul class="text-left">
+                <li><strong>Project or Solution Name:</strong> Enter the name of the project or solution.</li>
+                <li><strong>Path:</strong> Provide the path to the asset file. It should be a .assets.json file. EX: SolutionFolder/ProjectFolder/obj/project.assets.json</li>
+                <li><strong>Is it a Solution asset.json file?</strong> Check this box if the asset file is for a solution.</li>
+            </ul>
+        </div>
         <div>
             <label>
                 Project or Solution Name:
@@ -30,8 +38,14 @@
                 <InputCheckbox @bind-Value="Model!.IsSolution" />
             </label>
         </div>
-        <button type="Submit">Submit</button>
-        <button type="button" @onclick="Cancel">Cancel</button>
+        <div class="row">
+            <div class="col-12 col-md-4 col-lg-3 offset-0 offset-md-4 offset-lg-6">
+                <button type="Submit" class="btn btn-primary w-100">Submit</button>
+            </div>
+            <div class="col-12 col-md-4 col-lg-3">
+                <button type="button" class="btn btn-secondary w-100" @onclick="Cancel">Cancel</button>
+            </div>
+        </div>
     </EditForm>
 </div>
 
@@ -48,7 +62,7 @@
     private async Task Submit()
     {
         var output = await _nugetFileService.AddNewAssetsFile(Model!.ProjectSolutionName, Model!.IsSolution ? "Solution" : "Project", Model!.Path);
-        _nav.NavigateTo("/test");
+        _nav.NavigateTo("/");
     }
 
     private void Cancel()
