@@ -1,0 +1,14 @@
+This is to count lines
+This will also check for the regax pattern
+The next line will be empty
+
+The next line will have the regax pattern
+<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.8" />
+The next Two lines will have the regax pattern
+<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.8" PrivateAssets="all" />
+<PackageReference Include="Z.Blazor.Diagrams" Version="3.0.2" />
+The next line will have the regax pattern but not be a real NuGet package
+<PackageReference Include="ThisIsNotARealPackage.HaHaHa" Version="-1000.1.1" />
+The next line will have the regax pattern but be a repeat NuGet package
+<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.9" />
+<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.10.0" />

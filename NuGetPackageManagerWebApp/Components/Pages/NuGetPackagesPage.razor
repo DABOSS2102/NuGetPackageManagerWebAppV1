@@ -1,0 +1,100 @@
+﻿@page "/NuGetPackagesPage"
+
+@using NuGetPackageManagerApp.AppCode.NuGet;
+
+@inject NuGetService NuGetService
+
+<h3>NuGet Package Page</h3>
+
+<div class="card">
+    <div class="card-header">
+        <h4>Auto Complete</h4>
+    </div>
+    <div class="card-body">
+        <input type="text" @oninput="OnSearchInputChanged" value="@searchQuery" placeholder="Enter package name..." />
+        <ul>
+            @if (suggestions != null && suggestions.Count > 0)
+            {
+                @foreach (var suggestion in suggestions)
+                {
+                    <li @onclick="() => SelectSuggestion(suggestion)">
+                        @suggestion
+                    </li>
+                }
+            }
+        </ul>
+    </div>
+</div>
+<div class="card">
+    <div class="card-header">
+        Get Package Versions (BootstrapBlazor)
+    </div>
+    <div class="card-body">
+        @if(foundSearchPackages != null && foundSearchPackages.Count > 0)
+        {
+            @foreach (var package in foundSearchPackages)
+            {
+                <div class="row mb-1 bg-dark" style="color:white;">
+                    <div class="col-6">
+                        @package.id
+                    </div>
+                    <div class="col-3">
+                        @package.id
+                    </div>
+                    <div class="col-3">
+                        @package.version
+                    </div>
+                    <div class="col-12">
+                        @package.description
+                    </div>
+                    <div class="col-11 offset-1 overflow-scroll" style="height: 96px;">
+                        <div>
+                            Versions:
+                        </div>
+                        @foreach(var subVersion in package.Versions)
+                        {
+                            <div>
+                                <p><strong>@subVersion.Version</strong> - Downloads: @subVersion.Downloads</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <p>No packages found</p>
+        }
+    </div>
+</div>
+
+@code {
+    private string searchQuery = string.Empty;
+    private List<string> suggestions = new List<string>();
+    private List<NuGetPackageSearchInfo> foundSearchPackages = new List<NuGetPackageSearchInfo>();
+    
+    protected override async Task OnInitializedAsync()
+    {
+        foundSearchPackages = await NuGetService.GetSearchQueryResults("BootstrapBlazor");
+    }
+
+    private async Task OnSearchInputChanged(ChangeEventArgs e)
+    {
+        searchQuery = e.Value?.ToString() ?? string.Empty;
+
+        if (!string.IsNullOrWhiteSpace(searchQuery))
+        {
+            suggestions = await NuGetService.GetAutoCompleteSuggestions(searchQuery);
+        }
+        else
+        {
+            suggestions.Clear();
+        }
+    }
+
+    private void SelectSuggestion(string suggestion)
+    {
+        searchQuery = suggestion;
+        suggestions.Clear(); // Clear suggestions after selection
+    }
+}

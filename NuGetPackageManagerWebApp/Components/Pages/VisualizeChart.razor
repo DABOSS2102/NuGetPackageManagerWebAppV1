@@ -1,0 +1,287 @@
+﻿@page "/VisualizeChart/{assetFileId:int}"
+
+@using Blazor.Diagrams;
+@using Blazor.Diagrams.Core.Anchors;
+@using Blazor.Diagrams.Core.Geometry;
+@using Blazor.Diagrams.Core.Models;
+@using Blazor.Diagrams.Core.PathGenerators;
+@using Blazor.Diagrams.Core.Routers;
+@using Blazor.Diagrams.Options;
+@using Blazor.Diagrams.Components;
+@using Blazor.Diagrams.Components.Widgets;
+@using NuGet.Protocol;
+@using NuGet.Packaging.Core;
+@using NuGetPackageManagerWebApp.AppCode;
+
+@inject VisualizeChartBackEnd _BE;
+
+<h3>VisualizeChart</h3>
+
+<head>
+    <style>
+        h3 {
+        text-align: center;
+        }
+
+        .diagram-container {
+        width: 100%;
+        height: 80vh;
+        border: 1px solid black; /* Just visual */
+        }
+
+        .default-node{
+            width:auto !important;
+            padding-left:10px;
+            padding-right:10px;
+        }
+    </style>
+    <script src="_content/Z.Blazor.Diagrams/script.min.js"></script>
+    <link href="_content/Z.Blazor.Diagrams/style.min.css" rel="stylesheet" />
+    <link href="_content/Z.Blazor.Diagrams/default.styles.min.css" rel="stylesheet" />
+</head>
+
+@if (loadingPageData)
+{
+    <div>
+        <h4>Loading Page</h4>
+    </div>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div>
+        <h4>Error: @errorMessage</h4>
+    </div>
+}
+else
+{
+    <div>
+        <h4>Diagram</h4>
+        <button @onclick="CreateDataMapDiagram">Generate Graph</button>
+    </div>
+    @if (Nodes.Count != 0 && !generatingGraph)
+    {
+        <div class="diagram-container">
+            <CascadingValue Value="Diagram" IsFixed="true">
+                <DiagramCanvas>
+                    <Widgets>
+                        <GridWidget Size="30" Mode="GridMode.Line" BackgroundColor="white" />
+                    </Widgets>
+                </DiagramCanvas>
+            </CascadingValue>
+        </div>
+    }
+    else if (generatingGraph)
+    {
+        <div>
+            <h4>Generating Graph</h4>
+        </div>
+    }
+}
+
+@code {
+
+    #region vars
+
+    [Parameter]
+    public int assetFileId { get; set; }
+
+    private BlazorDiagram Diagram { get; set; } = null!;
+    public List<CustomNodeModel> Nodes { get; set; } = new List<CustomNodeModel>();
+    public List<string> TestingData { get; set; } = new List<string>();
+
+    private List<NuGetNodeInformation> FoundPackageData { get; set; } = new List<NuGetNodeInformation>();
+
+    bool loadingPageData = false;
+    bool generatingGraph = false;
+    string errorMessage = string.Empty;
+    string loopWarningMessage = string.Empty;
+
+    private List<int> TestingNodes { get; set; } = new List<int>() { 5, 20, 30, 45, 932 };
+
+    Dictionary<string, int> inUseDependencyCounts = new Dictionary<string, int>();
+
+    #endregion
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            loadingPageData = true;
+            FoundPackageData = await _BE.GetData(assetFileId.ToString());
+            await countPackageDependencies();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading data: {ex.Message}";
+        }
+        finally
+        {
+            loadingPageData = false;
+            StateHasChanged();
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        // Setup the diagram
+        BlazorDiagramOptions options = new BlazorDiagramOptions
+            {
+                AllowMultiSelection = true,
+                Zoom =
+            {
+                Enabled = true,
+            },
+                Links =
+            {
+                DefaultRouter = new OrthogonalRouter(),
+                DefaultPathGenerator = new StraightPathGenerator(),
+            },
+            };
+
+        Diagram = new BlazorDiagram(options);
+    }
+
+    private Task countPackageDependencies()
+    {
+        foreach (var package in FoundPackageData)
+        {
+            if (!inUseDependencyCounts.ContainsKey(package.packageId))
+            {
+                inUseDependencyCounts.Add(package.packageId, 0);
+            }
+            if (package.dependencies != null)
+            {
+                foreach (var dependency in package.dependencies)
+                {
+                    if (dependency != null && FoundPackageData.Any(x => x.packageId == dependency.Id))
+                    {
+                        if (!inUseDependencyCounts.ContainsKey(dependency.Id))
+                        {
+                            inUseDependencyCounts.Add(dependency.Id, 1);
+                        }
+                        else
+                        {
+                            inUseDependencyCounts[dependency.Id] += 1;
+                        }
+                    }
+                }
+            }
+        }
+        inUseDependencyCounts = inUseDependencyCounts.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
+        return Task.CompletedTask;
+    }
+
+    private void CreateDataMapDiagram()
+    {
+        try
+        {
+            generatingGraph = true;
+            StateHasChanged();
+            TestingData = new List<string> { "Starting Node creation" };
+            (double, double) position = (50, 50);
+
+            var nodeIterationList = new List<NuGetNodeInformation>();
+            var existingNodes = new Dictionary<string, (double x, double y)>();
+
+            foreach (var package in inUseDependencyCounts)
+            {
+                var currentNode = FoundPackageData.FirstOrDefault(x => x.packageId == package.Key);
+                if (package.Value == 0)
+                {
+                    addNodeToDiagram2(currentNode, position);
+                    existingNodes[currentNode.packageId] = position;
+                    position = (position.Item1 + 150, position.Item2);
+                    if (position.Item1 > 800)
+                    {
+                        position = (50, position.Item2 + 100);
+                    }
+                }
+                else
+                {
+                    nodeIterationList.Add(currentNode);
+                }
+            }
+
+            int index = 0;
+            int loopCounter = 0;
+            const int maxLoopIterations = 1000; // Set a reasonable limit for loop iterations
+
+            while (nodeIterationList.Count > 0)
+            {
+                if (index >= nodeIterationList.Count)
+                {
+                    index = 0;
+                }
+
+                var currentNode = nodeIterationList[index];
+                bool allDependenciesExist = currentNode.dependencies.All(d => existingNodes.ContainsKey(d.Id));
+
+                if (allDependenciesExist)
+                {
+                    // Calculate the position for the current node
+                    double maxX = currentNode.dependencies.Any() ? currentNode.dependencies.Max(d => existingNodes[d.Id].x) : position.Item1;
+                    position = (maxX + 150, position.Item2);
+
+                    addNodeToDiagram2(currentNode, position);
+                    existingNodes[currentNode.packageId] = position;
+                    nodeIterationList.RemoveAt(index);
+
+                    // Adjust position for the next node
+                    position = (position.Item1, position.Item2 + 100);
+                    if (position.Item2 > 800)
+                    {
+                        position = (position.Item1 + 150, 50);
+                    }
+                }
+                else
+                {
+                    index++;
+                }
+
+                loopCounter++;
+                if (loopCounter > maxLoopIterations)
+                {
+                    loopWarningMessage = "Warning: Loop exceeded maximum iterations. Some nodes may not be displayed.";
+                    break;
+                }
+            }
+
+            TestingData.Add("Node creation completed");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error generating graph: {ex.Message}";
+        }
+        finally
+        {
+            generatingGraph = false;
+            StateHasChanged();
+        }
+    }
+
+
+
+    private void addNodeToDiagram2(NuGetNodeInformation package, (double, double) position)
+    {
+        if (package == null)
+        {
+            package = new NuGetNodeInformation();
+        }
+        CustomNodeModel customNodeModel = new CustomNodeModel(package, new Point(position.Item1, position.Item2));
+        Diagram.Nodes.Add(customNodeModel);
+        Nodes.Add(customNodeModel);
+        if (inUseDependencyCounts[customNodeModel.Title] > 0)
+        {
+            foreach (var dependency in package.dependencies)
+            {
+                if (FoundPackageData.Any(x => x.packageId == dependency.Id))
+                {
+                    var DependencyNode = Nodes.FirstOrDefault(x => x.Title == dependency.Id);
+                    var link = Diagram.Links.Add(DependencyNode.addAsDependencyNode(customNodeModel));
+                    link.Router = new OrthogonalRouter();
+                }
+            }
+        }
+    }
+
+}

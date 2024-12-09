@@ -1,0 +1,62 @@
+﻿@page "/showEverything"
+
+@using NuGetPackageManagerApp.AppCode
+@using NuGetPackageManagerWebApp.AppCode.CustomNuGetV2;
+@using System.ComponentModel.DataAnnotations;
+
+@inject NavigationManager _nav
+@inject NuGetFileServiceV2 _nugetFileService;
+
+<h4>All Data</h4>
+
+<div class="row">
+    <div class="col-12 col-md-6">
+        <h4>Full Package List</h4>
+        @foreach (var package in packageRows)
+        {
+            <p>
+                @($"ID:{package.CustomPackageId} | Name: {package.PackageName} | Version: {package.PackageVersion}")
+            </p>
+        }
+    </div>
+    <div class="col-12 col-md-6">
+        <h4>Full Asset File List</h4>
+        <button type="button" class="btn btn-primary" @onclick="@navigateToAssetFileAdd">Add New Asset File</button>
+        <h5>Solutions</h5>
+        @foreach (var asset in assetRows.Where(x => x.ProjectOrSolution == "Solution"))
+        {
+            <p>
+                @($"Name:{asset.Name} | Path: {asset.AssetsPath}")
+            </p>
+            <button @onclick="(()=>_nav.NavigateTo(VisualizeChartPath+asset.AssetFileIds))">Show Graph</button>
+        }
+        <h5>Projects</h5>
+        @foreach (var asset in assetRows.Where(x => x.ProjectOrSolution == "Project"))
+        {
+            <p>
+                @($"Name:{asset.Name} | Path: {asset.AssetsPath}")
+                <button @onclick="(()=>_nav.NavigateTo(VisualizeChartPath+asset.AssetFileIds))">Show Graph</button>
+            </p>
+        }
+    </div>
+</div>
+
+@code {
+    List<AssetFilesRow> assetRows = new List<AssetFilesRow>();
+    List<FoundNuGetPackageRow> packageRows = new List<FoundNuGetPackageRow>();
+
+    public string VisualizeChartPath = "/VisualizeChart/";
+
+    protected override async Task OnInitializedAsync()
+    {
+        assetRows = await _nugetFileService.GetAllAssetRows();
+        assetRows.OrderBy(x => x.Name);
+        packageRows = await _nugetFileService.PullDataFromPackagesSaveFiles();
+        packageRows.OrderBy(x => x.PackageName);
+    }
+
+    private void navigateToAssetFileAdd()
+    {
+        _nav.NavigateTo("assetFileAdd");
+    }
+}

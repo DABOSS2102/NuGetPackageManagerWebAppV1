@@ -1,0 +1,80 @@
+﻿@page "/DiagramPage"
+
+@using Blazor.Diagrams.Components
+@using Blazor.Diagrams.Components.Widgets
+@using Blazor.Diagrams;
+@using Blazor.Diagrams.Core.Anchors;
+@using Blazor.Diagrams.Core.Geometry;
+@using Blazor.Diagrams.Core.Models;
+@using Blazor.Diagrams.Core.PathGenerators;
+@using Blazor.Diagrams.Core.Routers;
+@using Blazor.Diagrams.Options;
+
+<h3>DiagramPage</h3>
+<button @onclick="(()=>showDiagram=!showDiagram)">Toggle Diagram</button>
+
+@if (showDiagram)
+{
+    <button @onclick="AddNewNode">Add Node</button>
+    <div class="diagram-container">
+        <CascadingValue Value="Diagram" IsFixed="true">
+            <DiagramCanvas>
+                <Widgets>
+                    <GridWidget Size="30" Mode="GridMode.Line" BackgroundColor="white" />
+                </Widgets>
+            </DiagramCanvas>
+        </CascadingValue>
+    </div>
+}
+
+<div>
+    Test
+</div>
+
+@code {
+    private BlazorDiagram Diagram { get; set; } = null!;
+    private bool showDiagram = false;
+    private int nodeNumber = 3;
+    protected override void OnInitialized()
+    {
+        var options = new BlazorDiagramOptions
+            {
+                AllowMultiSelection = true,
+                Zoom =
+                {
+                    Enabled = true,
+                },
+                Links =
+                {
+                    DefaultRouter = new OrthogonalRouter(),
+                    DefaultPathGenerator = new StraightPathGenerator(),
+                },
+            };
+
+        Diagram = new BlazorDiagram(options);
+
+        var Node1 = Diagram.Nodes.Add(new NodeModel(position: new Point(50, 50))
+            {
+                Title = "Node 1"
+            });
+        var Node2 = Diagram.Nodes.Add(new NodeModel(position: new Point(200, 100))
+            {
+                Title = "Node 2"
+            });
+        var Node1OutPort = Node1.AddPort(PortAlignment.Right);
+        var Node2InputPort = Node2.AddPort(PortAlignment.Left);
+
+        var SourceAnchor = new SinglePortAnchor(Node1OutPort);
+        var TargetAnchor = new SinglePortAnchor(Node2InputPort);
+        var link = Diagram.Links.Add(new LinkModel(SourceAnchor, TargetAnchor));
+    }
+
+    private void AddNewNode()
+    {
+        Diagram.Nodes.Add(new NodeModel(position: new Point(50, 50))
+            {
+                Title = nodeNumber.ToString()
+            });
+        nodeNumber++;
+    }
+}
